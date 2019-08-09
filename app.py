@@ -17,9 +17,10 @@ app = Flask(__name__)
 #################################################
 # Database Setup
 #################################################
-
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get('DATABASE_URL', '') or "sqlite:///db/bellybutton.sqlite"
+app.config["SQLALCHEMY_TRACK_MODIFICATION"] = False
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///db/bellybutton.sqlite"
 db = SQLAlchemy(app)
+db.init_app(app)
 
 # reflect an existing database into a new model
 Base = automap_base()
@@ -40,7 +41,7 @@ def index():
 @app.route("/names")
 def names():
     """Return a list of sample names."""
-
+    
     # Use Pandas to perform the sql query
     stmt = db.session.query(Samples).statement
     df = pd.read_sql_query(stmt, db.session.bind)
@@ -88,13 +89,34 @@ def samples(sample):
     # Filter the data based on the sample number and
     # only keep rows with values above 1
     sample_data = df.loc[df[sample] > 1, ["otu_id", "otu_label", sample]]
+    sample_data = sample_data.sort_values(by=[sample] ,ascending=False)
     # Format the data to send as json
     data = {
         "otu_ids": sample_data.otu_id.values.tolist(),
         "sample_values": sample_data[sample].values.tolist(),
         "otu_labels": sample_data.otu_label.tolist(),
     }
+
     return jsonify(data)
+
+
+@app.route("/wfreq/<sample>")
+def wfreq(sample):
+    selection = [
+    Samples_Metadata.sample,
+    Samples_Metadata.WFREQ,
+    ]
+
+    wfreq_results = db.session.query(*selection).filter(Samples_Metadata.sample == sample).all()
+
+    sample_wfreq = {}
+
+    for result in wfreq_results:
+        sample_wfreq["sample"] = result[0]
+        sample_wfreq["WFREQ"] = result[1]
+
+    return jsonify(sample_wfreq)
+
 
 
 if __name__ == "__main__":
