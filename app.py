@@ -19,10 +19,10 @@ app = Flask(__name__)
 #################################################
 # Database Setup
 #################################################
-app.config["SQLALCHEMY_TRACK_MODIFICATION"] = False
+# app.config["SQLALCHEMY_TRACK_MODIFICATION"] = False
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///db/bellybutton.sqlite"
 db = SQLAlchemy(app)
-db.init_app(app)
+# db.init_app(app)
 
 # reflect an existing database into a new model
 Base = automap_base()
